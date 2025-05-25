@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CodeSnippet from '@/components/CodeSnippet';
-import ToolCard from '@/components/ToolCard';
-import Chatbot from '@/components/Chatbot';
+import CodeSnippet from './../components/CodeSnippet';
+import ToolCard from './../components/ToolCard';
+import Chatbot from './../components/Chatbot';
 import { jsPDF } from 'jspdf';
 
 // Helper function for client-side CSV generation

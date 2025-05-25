@@ -1,5 +1,5 @@
 // app/api/ads-optimizer/route.js
-import prisma from '@/lib/prisma';
+import prisma from 'lib/prisma';
 import { NextResponse } from 'next/server';
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 
