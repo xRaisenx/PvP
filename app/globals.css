@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: sans-serif; /* Consider a more specific font stack for cross-browser consistency */
+}

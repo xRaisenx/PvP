@@ -1,0 +1,90 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db" // Ensure this matches DATABASE_URL in .env.local
+}
+
+model Snippet {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  code        String
+  language    String
+  createdAt   DateTime @default(now())
+}
+
+model ChatHistory {
+  id          Int      @id @default(autoincrement())
+  userMessage String
+  aiReply     String
+  createdAt   DateTime @default(now())
+}
+
+model Proposal {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  proposal    String
+  createdAt   DateTime @default(now())
+}
+
+model Gig {
+  id        Int      @id @default(autoincrement())
+  service   String
+  gig       String
+  createdAt DateTime @default(now())
+}
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique // Assuming email should be unique for clients
+  projects  String   // Consider normalization for complex project data
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id        Int      @id @default(autoincrement())
+  title     String
+  priority  String   // Could be an Enum (e.g., LOW, MEDIUM, HIGH) if your DB supports it or validated in app
+  dueDate   DateTime? // Optional due date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // Automatically track updates
+}
+
+model Event {
+  id        Int      @id @default(autoincrement())
+  title     String
+  start     DateTime
+  end       DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  title     String   @unique // Project titles likely should be unique
+  tasks     String   // Consider normalization (e.g., a separate Task table linked to Project)
+  status    String   // Could be an Enum (e.g., PENDING, ACTIVE, COMPLETED)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Report {
+  id        Int      @id @default(autoincrement())
+  type      String   // e.g., 'ads-optimizer', 'seo-audit'
+  content   String   // Could be JSON string for structured data
+  createdAt DateTime @default(now())
+}
+
+model Checkpoint {
+  id           Int      @id @default(autoincrement())
+  commitSha    String   @unique 
+  description  String
+  checkpointId Int      // From Date.now() in original JS. Consider BigInt if values exceed Int max.
+  createdAt    DateTime @default(now())
+}
