@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOLE SFA System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-paid {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-partial {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .status-overdue {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .status-warning {
+            background-color: #ffedd5;
+            color: #c2410c;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-green-700">DOLE SFA System</h1>
+                    <p class="text-gray-600 mt-1">Sales Force Automation & Financial Management</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <button id="notificationsBtn" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors relative">
+                            <i class="fas fa-bell text-gray-600"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                    </div>
+                    <div class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold">
+                        Admin
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-users text-blue-600 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Clients</p>
+                        <p id="totalClients" class="text-2xl font-bold text-gray-900">12</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-dollar-sign text-green-600 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                        <p id="totalRevenue" class="text-2xl font-bold text-gray-900">$89,450.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Overdue Payments</p>
+                        <p id="overduePayments" class="text-2xl font-bold text-gray-900">3</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <i class="fas fa-ban text-red-600 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Credit Hold</p>
+                        <p id="creditHold" class="text-2xl font-bold text-gray-900">1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Tabs -->
+        <div class="bg-white rounded-xl shadow-sm border mb-8">
+            <div class="border-b">
+                <nav class="flex space-x-8 px-6">
+                    <button id="clientsTab" class="py-4 px-1 border-b-2 border-green-500 font-medium text-green-600">Clients</button>
+                    <button id="ordersTab" class="py-4 px-1 font-medium text-gray-500 hover:text-gray-700">Orders</button>
+                    <button id="paymentsTab" class="py-4 px-1 font-medium text-gray-500 hover:text-gray-700">Payments</button>
+                    <button id="reportsTab" class="py-4 px-1 font-medium text-gray-500 hover:text-gray-700">Reports</button>
+                </nav>
+            </div>
+
+            <!-- Clients Tab -->
+            <div id="clientsContent" class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Client Management</h2>
+                    <div class="flex gap-4">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="clientsSearch" placeholder="Search clients..." 
+                                   class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   oninput="filterClients()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Client</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Total Orders</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Outstanding</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Last Order</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTable" class="divide-y divide-gray-200">
+                            <!-- Table content will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div id="ordersContent" class="p-6 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Orders Management</h2>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Order #</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Client</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable" class="divide-y divide-gray-200">
+                            <!-- Table content will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payments Tab -->
+            <div id="paymentsContent" class="p-6 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Payments Management</h2>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Payment #</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Client</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Method</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTable" class="divide-y divide-gray-200">
+                            <!-- Table content will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reportsContent" class="p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Status Overview</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Paid in Full</span>
+                                <span class="font-semibold text-green-600">8 clients</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Partial Payments</span>
+                                <span class="font-semibold text-yellow-600">3 clients</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Overdue</span>
+                                <span class="font-semibold text-red-600">1 client</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Revenue by Product</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Fresh Pineapples</span>
+                                <span class="font-semibold text-gray-900">$35,200</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Canned Pineapples</span>
+                                <span class="font-semibold text-gray-900">$28,750</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Pineapple Juice</span>
+                                <span class="font-semibold text-gray-900">$25,500</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Details Modal -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content fade-in">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 id="clientModalTitle" class="text-xl font-bold text-gray-900">Client Details</h2>
+                    <button onclick="closeModal('clientModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div id="clientDetails" class="space-y-6">
+                    <!-- Client details will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Processing Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content fade-in">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-900">Process Payment</h2>
+                    <button onclick="closeModal('paymentModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="paymentForm" class="p-6 space-y-4">
+                <input type="hidden" id="paymentClientId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Client</label>
+                    <input type="text" id="paymentClientName" disabled
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount Due</label>
+                        <input type="text" id="paymentAmountDue" disabled
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Amount</label>
+                        <input type="number" id="paymentAmount" min="0" step="0.01" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Date</label>
+                        <input type="date" id="paymentDate" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                        <select id="paymentMethod" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select method</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cash">Cash</option>
+                            <option value="check">Check</option>
+                            <option value="credit_card">Credit Card</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea id="paymentNotes" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Enter any notes about this payment..."></textarea>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 mt-1"></i>
+                        <div class="ml-3">
+                            <h4 class="text-sm font-medium text-yellow-800">Important</h4>
+                            <p class="text-sm text-yellow-700">This client has outstanding payments from previous months. Please ensure proper allocation of payments.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal('paymentModal')"
+                            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Process Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notificationModal" class="modal">
+        <div class="modal-content fade-in">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-900">Notifications</h2>
+                    <button onclick="closeModal('notificationModal')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 max-h-96 overflow-y-auto">
+                <div class="space-y-4" id="notificationsList">
+                    <div class="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-triangle text-red-500 mt-1"></i>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-red-800">Urgent: JULMAR Payment Alert</p>
+                                <p class="text-sm text-red-700">Client JULMAR has overdue payments totaling $2,850.00 from the last 3 months. Partial payment received 2 months ago, no payment last month.</p>
+                                <p class="text-xs text-red-600 mt-1">2 hours ago</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded-r-lg">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 mt-1"></i>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-yellow-800">Action Required: Credit Limit</p>
+                                <p class="text-sm text-yellow-700">Client JULMAR has reached 95% of their credit limit. Review credit terms and payment history.</p>
+                                <p class="text-xs text-yellow-600 mt-1">1 day ago</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r-lg">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-blue-800">New Order Received</p>
+                                <p class="text-sm text-blue-700">Client FreshMart has placed a new order #DO-2024-008 for $1,250.00 worth of canned pineapples.</p>
+                                <p class="text-xs text-blue-600 mt-1">2 days ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        let clients = [
+            {
+                id: 1,
+                name: "JULMAR",
+                status: "credit_hold",
+                totalOrders: 15,
+                outstanding: 2850.00,
+                lastOrder: "2024-01-15",
+                contact: "julmar@julmarcorp.com",
+                phone: "(555) 123-4567",
+                address: "123 Business Ave, Manila, Philippines",
+                creditLimit: 3000.00,
+                creditUsed: 2850.00,
+                paymentTerms: "Net 30",
+                accountManager: "Maria Santos",
+                lastPayment: "2024-01-10",
+                paymentHistory: [
+                    { date: "2024-01-10", amount: 1500.00, method: "bank_transfer", reference: "BT-2024-001" },
+                    { date: "2023-11-15", amount: 1000.00, method: "check", reference: "CHK-2023-015" }
+                ],
+                orders: [
+                    { id: "DO-2024-001", date: "2024-01-15", amount: 2500.00, status: "pending_payment", items: ["Fresh Pineapples (100 cases)", "Canned Pineapples (50 cases)"] },
+                    { id: "DO-2023-012", date: "2023-12-10", amount: 3000.00, status: "partial_paid", items: ["Pineapple Juice (200 cases)"] }
+                ]
+            },
+            {
+                id: 2,
+                name: "FreshMart Supermarket",
+                status: "active",
+                totalOrders: 28,
+                outstanding: 450.00,
+                lastOrder: "2024-01-20",
+                contact: "purchasing@freshmart.com",
+                phone: "(555) 234-5678",
+                address: "456 Market St, Quezon City, Philippines",
+                creditLimit: 5000.00,
+                creditUsed: 450.00,
+                paymentTerms: "Net 15",
+                accountManager: "Juan Dela Cruz",
+                lastPayment: "2024-01-18",
+                paymentHistory: [
+                    { date: "2024-01-18", amount: 2000.00, method: "bank_transfer", reference: "BT-2024-002" },
+                    { date: "2024-01-03", amount: 1800.00, method: "cash", reference: "CSH-2024-001" }
+                ],
+                orders: [
+                    { id: "DO-2024-008", date: "2024-01-20", amount: 1250.00, status: "paid", items: ["Canned Pineapples (100 cases)"] },
+                    { id: "DO-2024-007", date: "2024-01-05", amount: 2000.00, status: "paid", items: ["Fresh Pineapples (80 cases)"] }
+                ]
+            },
+            {
+                id: 3,
+                name: "Tropical Delights",
+                status: "active",
+                totalOrders: 12,
+                outstanding: 0.00,
+                lastOrder: "2024-01-12",
+                contact: "orders@tropicaldelights.com",
+                phone: "(555) 345-6789",
+                address: "789 Paradise Rd, Cebu, Philippines",
+                creditLimit: 2000.00,
+                creditUsed: 0.00,
+                paymentTerms: "Net 30",
+                accountManager: "Ana Reyes",
+                lastPayment: "2024-01-12",
+                paymentHistory: [
+                    { date: "2024-01-12", amount: 1800.00, method: "bank_transfer", reference: "BT-2024-003" },
+                    { date: "2023-12-12", amount: 1500.00, method: "check", reference: "CHK-2023-012" }
+                ],
+                orders: [
+                    { id: "DO-2024-006", date: "2024-01-12", amount: 1800.00, status: "paid", items: ["Pineapple Juice (150 cases)"] }
+                ]
+            },
+            {
+                id: 4,
+                name: "Island Pantry",
+                status: "warning",
+                totalOrders: 8,
+                outstanding: 1200.00,
+                lastOrder: "2024-01-08",
+                contact: "info@islandpantry.com",
+                phone: "(555) 456-7890",
+                address: "321 Coastal Blvd, Davao, Philippines",
+                creditLimit: 2500.00,
+                creditUsed: 1200.00,
+                paymentTerms: "Net 30",
+                accountManager: "Carlos Gomez",
+                lastPayment: "2024-01-05",
+                paymentHistory: [
+                    { date: "2024-01-05", amount: 800.00, method: "bank_transfer", reference: "BT-2024-004" },
+                    { date: "2023-12-05", amount: 1000.00, method: "cash", reference: "CSH-2023-005" }
+                ],
+                orders: [
+                    { id: "DO-2024-005", date: "2024-01-08", amount: 1200.00, status: "partial_paid", items: ["Fresh Pineapples (50 cases)"] }
+                ]
+            }
+        ];
+
+        let orders = [
+            { id: "DO-2024-001", client: "JULMAR", date: "2024-01-15", amount: 2500.00, status: "pending_payment", items: ["Fresh Pineapples (100 cases)", "Canned Pineapples (50 cases)"] },
+            { id: "DO-2024-002", client: "FreshMart Supermarket", date: "2024-01-18", amount: 1800.00, status: "paid", items: ["Fresh Pineapples (70 cases)"] },
+            { id: "DO-2024-003", client: "Tropical Delights", date: "2024-01-14", amount: 900.00, status: "paid", items: ["Pineapple Juice (75 cases)"] },
+            { id: "DO-2024-004", client: "Island Pantry", date: "2024-01-10", amount: 600.00, status: "paid", items: ["Canned Pineapples (30 cases)"] },
+            { id: "DO-2024-005", client: "Island Pantry", date: "2024-01-08", amount: 1200.00, status: "partial_paid", items: ["Fresh Pineapples (50 cases)"] },
+            { id: "DO-2024-006", client: "Tropical Delights", date: "2024-01-12", amount: 1800.00, status: "paid", items: ["Pineapple Juice (150 cases)"] },
+            { id: "DO-2024-007", client: "FreshMart Supermarket", date: "2024-01-05", amount: 2000.00, status: "paid", items: ["Fresh Pineapples (80 cases)"] },
+            { id: "DO-2024-008", client: "FreshMart Supermarket", date: "2024-01-20", amount: 1250.00, status: "paid", items: ["Canned Pineapples (100 cases)"] }
+        ];
+
+        let payments = [
+            { id: "PY-2024-001", client: "JULMAR", date: "2024-01-10", amount: 1500.00, method: "bank_transfer", status: "completed", reference: "BT-2024-001" },
+            { id: "PY-2024-002", client: "FreshMart Supermarket", date: "2024-01-18", amount: 2000.00, method: "bank_transfer", status: "completed", reference: "BT-2024-002" },
+            { id: "PY-2024-003", client: "Tropical Delights", date: "2024-01-12", amount: 1800.00, method: "bank_transfer", status: "completed", reference: "BT-2024-003" },
+            { id: "PY-2024-004", client: "Island Pantry", date: "2024-01-05", amount: 800.00, method: "bank_transfer", status: "completed", reference: "BT-2024-004" },
+            { id: "PY-2023-015", client: "JULMAR", date: "2023-11-15", amount: 1000.00, method: "check", status: "completed", reference: "CHK-2023-015" },
+            { id: "PY-2023-012", client: "Tropical Delights", date: "2023-12-12", amount: 1500.00, method: "check", status: "completed", reference: "CHK-2023-012" },
+            { id: "PY-2023-005", client: "Island Pantry", date: "2023-12-05", amount: 1000.00, method: "cash", status: "completed", reference: "CSH-2023-005" },
+            { id: "PY-2024-005", client: "FreshMart Supermarket", date: "2024-01-03", amount: 1800.00, method: "cash", status: "completed", reference: "CSH-2024-001" }
+        ];
+
+        // DOM Elements
+        const clientsTable = document.getElementById('clientsTable');
+        const ordersTable = document.getElementById('ordersTable');
+        const paymentsTable = document.getElementById('paymentsTable');
+        const clientsSearch = document.getElementById('clientsSearch');
+        const notificationsBtn = document.getElementById('notificationsBtn');
+        const totalClientsEl = document.getElementById('totalClients');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const overduePaymentsEl = document.getElementById('overduePayments');
+        const creditHoldEl = document.getElementById('creditHold');
+
+        // Tab navigation
+        const tabs = {
+            clientsTab: 'clientsContent',
+            ordersTab: 'ordersContent',
+            paymentsTab: 'paymentsContent',
+            reportsTab: 'reportsContent'
+        };
+
+        Object.keys(tabs).forEach(tabId => {
+            document.getElementById(tabId).addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.border-b-2').forEach(el => {
+                    el.classList.remove('border-green-500', 'text-green-600');
+                    el.classList.add('border-transparent', 'text-gray-500');
+                });
+                
+                // Add active class to clicked tab
+                this.classList.remove('border-transparent', 'text-gray-500');
+                this.classList.add('border-green-500', 'text-green-600');
+                
+                // Hide all content sections
+                Object.values(tabs).forEach(contentId => {
+                    document.getElementById(contentId).classList.add('hidden');
+                });
+                
+                // Show selected content
+                document.getElementById(tabs[tabId]).classList.remove('hidden');
+            });
+        });
+
+        // Initialize the app
+        function init() {
+            renderClients();
+            renderOrders();
+            renderPayments();
+            updateStats();
+            
+            // Set default tab
+            document.getElementById('clientsTab').click();
+        }
+
+        // Render clients table
+        function renderClients() {
+            const searchTerm = clientsSearch.value.toLowerCase();
+            const filtered = clients.filter(client => 
+                client.name.toLowerCase().includes(searchTerm) ||
+                client.contact.toLowerCase().includes(searchTerm) ||
+                client.phone.includes(searchTerm)
+            );
+            
+            clientsTable.innerHTML = filtered.map(client => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div>
+                            <p class="font-medium text-gray-900">${client.name}</p>
+                            <p class="text-sm text-gray-500">${client.contact}</p>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            client.status === 'credit_hold' ? 'bg-red-100 text-red-800' :
+                            client.status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                        }">
+                            ${client.status === 'credit_hold' ? 'Credit Hold' :
+                              client.status === 'warning' ? 'Payment Warning' : 'Active'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-900">${client.totalOrders}</td>
+                    <td class="px-6 py-4 font-medium ${
+                        client.outstanding > 0 ? 'text-red-600' : 'text-green-600'
+                    }">
+                        $${client.outstanding.toFixed(2)}
+                    </td>
+                    <td class="px-6 py-4 text-gray-700">${client.lastOrder}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <button onclick="openClientDetails(${client.id})"
+                                    class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                    title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="openPaymentModal(${client.id})"
+                                    class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                                    title="Process Payment">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Render orders table
+        function renderOrders() {
+            ordersTable.innerHTML = orders.map(order => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-gray-900">${order.id}</td>
+                    <td class="px-6 py-4 text-gray-900">${order.client}</td>
+                    <td class="px-6 py-4 text-gray-700">${order.date}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900">$${order.amount.toFixed(2)}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            order.status === 'paid' ? 'bg-green-100 text-green-800' :
+                            order.status === 'partial_paid' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                        }">
+                            ${order.status === 'paid' ? 'Paid' :
+                              order.status === 'partial_paid' ? 'Partial Payment' : 'Pending Payment'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="openClientDetails(${clients.find(c => c.name === order.client)?.id})"
+                                class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            View Client
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Render payments table
+        function renderPayments() {
+            paymentsTable.innerHTML = payments.map(payment => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-gray-900">${payment.id}</td>
+                    <td class="px-6 py-4 text-gray-900">${payment.client}</td>
+                    <td class="px-6 py-4 text-gray-700">${payment.date}</td>
+                    <td class="px-6 py-4 font-medium text-green-600">$${payment.amount.toFixed(2)}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            payment.method === 'bank_transfer' ? 'bg-blue-100 text-blue-800' :
+                            payment.method === 'cash' ? 'bg-green-100 text-green-800' :
+                            payment.method === 'check' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-purple-100 text-purple-800'
+                        }">
+                            ${payment.method === 'bank_transfer' ? 'Bank Transfer' :
+                              payment.method === 'cash' ? 'Cash' :
+                              payment.method === 'check' ? 'Check' : 'Credit Card'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Completed
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Filter clients
+        function filterClients() {
+            renderClients();
+        }
+
+        // Update statistics
+        function updateStats() {
+            totalClientsEl.textContent = clients.length;
+            
+            const totalRevenue = orders.reduce((sum, order) => sum + order.amount, 0);
+            totalRevenueEl.textContent = `$${totalRevenue.toFixed(2)}`;
+            
+            const overdueCount = clients.filter(c => c.outstanding > 0).length;
+            overduePaymentsEl.textContent = overdueCount;
+            
+            const creditHoldCount = clients.filter(c => c.status === 'credit_hold').length;
+            creditHoldEl.textContent = creditHoldCount;
+        }
+
+        // Open modals
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Open client details
+        function openClientDetails(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+
+            const clientDetails = document.getElementById('clientDetails');
+            clientDetails.innerHTML = `
+                <div class="border-b pb-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">${client.name}</h3>
+                            <p class="text-gray-600">${client.contact}</p>
+                            <p class="text-gray-600">${client.phone}</p>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            client.status === 'credit_hold' ? 'bg-red-100 text-red-800' :
+                            client.status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                        }">
+                            ${client.status === 'credit_hold' ? 'Credit Hold' :
+                              client.status === 'warning' ? 'Payment Warning' : 'Active'}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-3">Account Information</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Address:</span>
+                                <span class="text-gray-900">${client.address}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Account Manager:</span>
+                                <span class="text-gray-900">${client.accountManager}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Payment Terms:</span>
+                                <span class="text-gray-900">${client.paymentTerms}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Last Payment:</span>
+                                <span class="text-gray-900">${client.lastPayment}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-3">Financial Summary</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Credit Limit:</span>
+                                <span class="text-gray-900">$${client.creditLimit.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Credit Used:</span>
+                                <span class="text-gray-900">$${client.creditUsed.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Outstanding Balance:</span>
+                                <span class="text-red-600 font-medium">$${client.outstanding.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Credit Utilization:</span>
+                                <span class="text-gray-900">${((client.creditUsed / client.creditLimit) * 100).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-3">Payment History</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">Date</th>
+                                    <th class="px-3 py-2 text-left">Amount</th>
+                                    <th class="px-3 py-2 text-left">Method</th>
+                                    <th class="px-3 py-2 text-left">Reference</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${client.paymentHistory.map(p => `
+                                    <tr>
+                                        <td class="px-3 py-2">${p.date}</td>
+                                        <td class="px-3 py-2">$${p.amount.toFixed(2)}</td>
+                                        <td class="px-3 py-2 capitalize">${p.method.replace('_', ' ')}</td>
+                                        <td class="px-3 py-2">${p.reference}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-3">Recent Orders</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">Order #</th>
+                                    <th class="px-3 py-2 text-left">Date</th>
+                                    <th class="px-3 py-2 text-left">Amount</th>
+                                    <th class="px-3 py-2 text-left">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${client.orders.map(o => `
+                                    <tr>
+                                        <td class="px-3 py-2">${o.id}</td>
+                                        <td class="px-3 py-2">${o.date}</td>
+                                        <td class="px-3 py-2">$${o.amount.toFixed(2)}</td>
+                                        <td class="px-3 py-2">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                                o.status === 'paid' ? 'bg-green-100 text-green-800' :
+                                                o.status === 'partial_paid' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                            }">
+                                                ${o.status === 'paid' ? 'Paid' :
+                                                  o.status === 'partial_paid' ? 'Partial Payment' : 'Pending Payment'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                ${client.name === 'JULMAR' ? `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-triangle text-red-500 mt-1"></i>
+                        <div class="ml-3">
+                            <h4 class="text-sm font-medium text-red-800">Urgent Payment Alert</h4>
+                            <p class="text-sm text-red-700">Client JULMAR has overdue payments totaling $2,850.00 from the last 3 months. Partial payment received 2 months ago, no payment last month. Immediate action required.</p>
+                            <div class="mt-2">
+                                <button onclick="openPaymentModal(${client.id}); closeModal('clientModal')"
+                                        class="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded">
+                                    Process Payment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            openModal('clientModal');
+        }
+
+        // Open payment modal
+        function openPaymentModal(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+
+            document.getElementById('paymentClientId').value = client.id;
+            document.getElementById('paymentClientName').value = client.name;
+            document.getElementById('paymentAmountDue').value = `$${client.outstanding.toFixed(2)}`;
+            document.getElementById('paymentDate').valueAsDate = new Date();
+            
+            openModal('paymentModal');
+        }
+
+        // Process payment
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const clientId = parseInt(document.getElementById('paymentClientId').value);
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+
+            const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
+            const paymentDate = document.getElementById('paymentDate').value;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const paymentNotes = document.getElementById('paymentNotes').value;
+
+            if (paymentAmount <= 0 || paymentAmount > client.outstanding) {
+                alert('Payment amount must be greater than 0 and not exceed the outstanding balance.');
+                return;
+            }
+
+            // Create new payment record
+            const newPayment = {
+                id: `PY-${new Date().getFullYear()}-${payments.length + 1}`,
+                client: client.name,
+                date: paymentDate,
+                amount: paymentAmount,
+                method: paymentMethod,
+                status: 'completed',
+                reference: `${paymentMethod.substring(0,3).toUpperCase()}-${new Date().getFullYear()}-${payments.length + 1}`
+            };
+
+            payments.unshift(newPayment);
+
+            // Update client balance
+            client.outstanding = Math.max(0, client.outstanding - paymentAmount);
+            client.creditUsed = client.creditLimit - client.outstanding;
+            client.lastPayment = paymentDate;
+
+            // Add to payment history
+            client.paymentHistory.unshift({
+                date: paymentDate,
+                amount: paymentAmount,
+                method: paymentMethod,
+                reference: newPayment.reference
+            });
+
+            // Check if client should be removed from credit hold
+            if (client.status === 'credit_hold' && client.outstanding <= 0) {
+                client.status = 'active';
+            }
+
+            // Update UI
+            closeModal('paymentModal');
+            renderClients();
+            renderPayments();
+            updateStats();
+
+            // Show success message
+            alert(`Payment of $${paymentAmount.toFixed(2)} processed successfully for ${client.name}.`);
+        });
+
+        // Notifications
+        notificationsBtn.addEventListener('click', function() {
+            openModal('notificationModal');
+        });
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
