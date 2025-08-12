@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOLE SFA System - JULMAR Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-paid {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-partial {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .status-overdue {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .status-warning {
+            background-color: #ffedd5;
+            color: #c2410c;
+        }
+        .product-card {
+            transition: all 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .quantity-input {
+            width: 60px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-green-600">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-8">
+                <div class="bg-green-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-seedling text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900">DOLE SFA System</h1>
+                <p class="text-gray-600 mt-2">Sales Force Automation & Financial Management</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">User Type</label>
+                    <select id="userType" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="client">Client (JULMAR)</option>
+                        <option value="agent">Sales Agent</option>
+                        <option value="admin">Backoffice Admin</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                </div>
+                
+                <button id="loginBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                    Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client (JULMAR) Dashboard -->
+    <div id="clientDashboard" class="hidden">
+        <div class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-green-700">JULMAR - Client Portal</h1>
+                        <p class="text-gray-600 mt-1">Welcome back, JULMAR Procurement Team</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                            Credit Hold
+                        </div>
+                        <button id="clientLogout" class="text-gray-600 hover:text-gray-800 font-medium">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Client Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-blue-100 rounded-lg">
+                            <i class="fas fa-box text-blue-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Outstanding Balance</p>
+                            <p id="clientOutstanding" class="text-2xl font-bold text-red-600">$2,850.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-yellow-100 rounded-lg">
+                            <i class="fas fa-clock text-yellow-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Last Payment</p>
+                            <p class="text-2xl font-bold text-gray-900">Jan 10, 2024</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-green-100 rounded-lg">
+                            <i class="fas fa-truck text-green-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Pending Orders</p>
+                            <p class="text-2xl font-bold text-gray-900">2</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-purple-100 rounded-lg">
+                            <i class="fas fa-calendar text-purple-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Next Delivery</p>
+                            <p class="text-2xl font-bold text-gray-900">Feb 15, 2024</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl mt-1"></i>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-red-800">Urgent Payment Required</h3>
+                        <p class="text-red-700 mt-1">Your account is on credit hold due to outstanding balance of $2,850.00 from the last 3 months. 
+                           Partial payment received 2 months ago, no payment last month. Orders cannot be processed until balance is settled.</p>
+                        <div class="mt-4">
+                            <button id="makePaymentBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold">
+                                Make Payment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOLE Products -->
+            <div class="bg-white rounded-xl shadow-sm border p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">DOLE Premium Products</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="product-card bg-white rounded-lg border p-6">
+                        <div class="text-center mb-4">
+                            <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-apple-alt text-3xl text-green-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Fresh Pineapples</h3>
+                            <p class="text-gray-600 text-sm">Premium Grade A</p>
+                        </div>
+                        <div class="text-center mb-4">
+                            <span class="text-2xl font-bold text-green-600">$12.50</span>
+                            <span class="text-gray-600 text-sm"> / case</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm text-gray-600">Quantity:</span>
+                            <div class="flex items-center">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-l flex items-center justify-center" data-action="decrease" data-product="pineapple">
+                                    <i class="fas fa-minus text-gray-600"></i>
+                                </button>
+                                <input type="text" class="quantity-input border-t border-b border-gray-300" value="0" data-product="pineapple">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-r flex items-center justify-center" data-action="increase" data-product="pineapple">
+                                    <i class="fas fa-plus text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
+                            Add to Order (Credit Hold)
+                        </button>
+                    </div>
+
+                    <div class="product-card bg-white rounded-lg border p-6">
+                        <div class="text-center mb-4">
+                            <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-cube text-3xl text-orange-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Canned Pineapples</h3>
+                            <p class="text-gray-600 text-sm">In Natural Juice</p>
+                        </div>
+                        <div class="text-center mb-4">
+                            <span class="text-2xl font-bold text-green-600">$8.75</span>
+                            <span class="text-gray-600 text-sm"> / case</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm text-gray-600">Quantity:</span>
+                            <div class="flex items-center">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-l flex items-center justify-center" data-action="decrease" data-product="canned">
+                                    <i class="fas fa-minus text-gray-600"></i>
+                                </button>
+                                <input type="text" class="quantity-input border-t border-b border-gray-300" value="0" data-product="canned">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-r flex items-center justify-center" data-action="increase" data-product="canned">
+                                    <i class="fas fa-plus text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
+                            Add to Order (Credit Hold)
+                        </button>
+                    </div>
+
+                    <div class="product-card bg-white rounded-lg border p-6">
+                        <div class="text-center mb-4">
+                            <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-glass-whiskey text-3xl text-yellow-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Pineapple Juice</h3>
+                            <p class="text-gray-600 text-sm">100% Pure, No Sugar Added</p>
+                        </div>
+                        <div class="text-center mb-4">
+                            <span class="text-2xl font-bold text-green-600">$15.25</span>
+                            <span class="text-gray-600 text-sm"> / case</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm text-gray-600">Quantity:</span>
+                            <div class="flex items-center">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-l flex items-center justify-center" data-action="decrease" data-product="juice">
+                                    <i class="fas fa-minus text-gray-600"></i>
+                                </button>
+                                <input type="text" class="quantity-input border-t border-b border-gray-300" value="0" data-product="juice">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-r flex items-center justify-center" data-action="increase" data-product="juice">
+                                    <i class="fas fa-plus text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
+                            Add to Order (Credit Hold)
+                        </button>
+                    </div>
+
+                    <div class="product-card bg-white rounded-lg border p-6">
+                        <div class="text-center mb-4">
+                            <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-seedling text-3xl text-green-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Pineapple Slices</h3>
+                            <p class="text-gray-600 text-sm">Vacuum Packed, Ready to Eat</p>
+                        </div>
+                        <div class="text-center mb-4">
+                            <span class="text-2xl font-bold text-green-600">$18.00</span>
+                            <span class="text-gray-600 text-sm"> / case</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm text-gray-600">Quantity:</span>
+                            <div class="flex items-center">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-l flex items-center justify-center" data-action="decrease" data-product="slices">
+                                    <i class="fas fa-minus text-gray-600"></i>
+                                </button>
+                                <input type="text" class="quantity-input border-t border-b border-gray-300" value="0" data-product="slices">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-r flex items-center justify-center" data-action="increase" data-product="slices">
+                                    <i class="fas fa-plus text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
+                            Add to Order (Credit Hold)
+                        </button>
+                    </div>
+
+                    <div class="product-card bg-white rounded-lg border p-6">
+                        <div class="text-center mb-4">
+                            <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-drum text-3xl text-orange-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Pineapple Chunks</h3>
+                            <p class="text-gray-600 text-sm">In Syrup, Premium Quality</p>
+                        </div>
+                        <div class="text-center mb-4">
+                            <span class="text-2xl font-bold text-green-600">$9.50</span>
+                            <span class="text-gray-600 text-sm"> / case</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm text-gray-600">Quantity:</span>
+                            <div class="flex items-center">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-l flex items-center justify-center" data-action="decrease" data-product="chunks">
+                                    <i class="fas fa-minus text-gray-600"></i>
+                                </button>
+                                <input type="text" class="quantity-input border-t border-b border-gray-300" value="0" data-product="chunks">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-r flex items-center justify-center" data-action="increase" data-product="chunks">
+                                    <i class="fas fa-plus text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
+                            Add to Order (Credit Hold)
+                        </button>
+                    </div>
+
+                    <div class="product-card bg-white rounded-lg border p-6">
+                        <div class="text-center mb-4">
+                            <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-blender text-3xl text-yellow-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Pineapple Puree</h3>
+                            <p class="text-gray-600 text-sm">Industrial Grade, Bulk Packaging</p>
+                        </div>
+                        <div class="text-center mb-4">
+                            <span class="text-2xl font-bold text-green-600">$22.75</span>
+                            <span class="text-gray-600 text-sm"> / case</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm text-gray-600">Quantity:</span>
+                            <div class="flex items-center">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-l flex items-center justify-center" data-action="decrease" data-product="puree">
+                                    <i class="fas fa-minus text-gray-600"></i>
+                                </button>
+                                <input type="text" class="quantity-input border-t border-b border-gray-300" value="0" data-product="puree">
+                                <button class="quantity-btn bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-r flex items-center justify-center" data-action="increase" data-product="puree">
+                                    <i class="fas fa-plus text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
+                            Add to Order (Credit Hold)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order History -->
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Order History</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Order #</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Products</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Amount</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">DO-2024-001</td>
+                                <td class="px-6 py-4 text-gray-700">Jan 15, 2024</td>
+                                <td class="px-6 py-4 text-gray-700">Fresh Pineapples (100), Canned (50)</td>
+                                <td class="px-6 py-4 font-medium text-gray-900">$2,500.00</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        Pending Payment
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">DO-2023-012</td>
+                                <td class="px-6 py-4 text-gray-700">Dec 10, 2023</td>
+                                <td class="px-6 py-4 text-gray-700">Pineapple Juice (200)</td>
+                                <td class="px-6 py-4 font-medium text-gray-900">$3,000.00</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Partially Paid
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">DO-2023-008</td>
+                                <td class="px-6 py-4 text-gray-700">Nov 5, 2023</td>
+                                <td class="px-6 py-4 text-gray-700">Fresh Pineapples (80), Slices (40)</td>
+                                <td class="px-6 py-4 font-medium text-gray-900">$2,440.00</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Paid
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Dashboard -->
+    <div id="agentDashboard" class="hidden">
+        <div class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-green-700">Sales Agent Portal</h1>
+                        <p class="text-gray-600 mt-1">John Martinez - Account Manager</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                            JULMAR Account
+                        </div>
+                        <button id="agentLogout" class="text-gray-600 hover:text-gray-800 font-medium">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Client Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-red-100 rounded-lg">
+                            <i class="fas fa-ban text-red-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Account Status</p>
+                            <p class="text-2xl font-bold text-red-600">Credit Hold</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-red-100 rounded-lg">
+                            <i class="fas fa-dollar-sign text-red-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Outstanding</p>
+                            <p class="text-2xl font-bold text-red-600">$2,850.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-yellow-100 rounded-lg">
+                            <i class="fas fa-clock text-yellow-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Last Payment</p>
+                            <p class="text-2xl font-bold text-gray-900">Jan 10, 2024</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-blue-100 rounded-lg">
+                            <i class="fas fa-phone text-blue-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Contact Status</p>
+                            <p class="text-2xl font-bold text-blue-600">Pending</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl mt-1"></i>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-yellow-800">Client Account Alert</h3>
+                        <p class="text-yellow-700 mt-1">JULMAR account is on credit hold with $2,850.00 outstanding balance. 
+                           No new orders can be processed until balance is settled. Last payment received 2 months ago, 
+                           no payment last month. Immediate follow-up required.</p>
+                        <div class="mt-4 flex gap-3">
+                            <button id="contactClientBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold">
+                                Contact Client
+                            </button>
+                            <button id="escalateBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold">
+                                Escalate to Finance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Orders -->
+            <div class="bg-white rounded-xl shadow-sm border p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">JULMAR Orders</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Order #</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Products</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Amount</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">DO-2024-001</td>
+                                <td class="px-6 py-4 text-gray-700">Jan 15, 2024</td>
+                                <td class="px-6 py-4 text-gray-700">Fresh Pineapples (100), Canned (50)</td>
+                                <td class="px-6 py-4 font-medium text-gray-900">$2,500.00</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        On Hold - Credit
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                        View Details
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">DO-2023-012</td>
+                                <td class="px-6 py-4 text-gray-700">Dec 10, 2023</td>
+                                <td class="px-6 py-4 text-gray-700">Pineapple Juice (200)</td>
+                                <td class="px-6 py-4 font-medium text-gray-900">$3,000.00</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Partial Payment
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                        View Details
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Payment History</h2>
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-green-500 bg-green-50 p-4">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-green-800">Jan 10, 2024</span>
+                                <span class="font-medium text-green-800">$1,500.00</span>
+                            </div>
+                            <p class="text-sm text-green-700">Bank Transfer - BT-2024-001</p>
+                        </div>
+                        <div class="border-l-4 border-yellow-500 bg-yellow-50 p-4">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-yellow-800">Nov 15, 2023</span>
+                                <span class="font-medium text-yellow-800">$1,000.00</span>
+                            </div>
+                            <p class="text-sm text-yellow-700">Check Payment - CHK-2023-015</p>
+                        </div>
+                        <div class="border-l-4 border-gray-300 bg-gray-50 p-4">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">Oct 2023</span>
+                                <span class="font-medium text-red-600">No Payment</span>
+                            </div>
+                            <p class="text-sm text-gray-500">Overdue - 30 days</p>
+                        </div>
+                        <div class="border-l-4 border-gray-300 bg-gray-50 p-4">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">Sep 2023</span>
+                                <span class="font-medium text-red-600">No Payment</span>
+                            </div>
+                            <p class="text-sm text-gray-500">Overdue - 60 days</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Account Notes</h2>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <div class="flex items-start">
+                                <i class="fas fa-sticky-note text-blue-500 mt-1 mr-2"></i>
+                                <div>
+                                    <p class="text-sm text-blue-800"><strong>Jan 18, 2024:</strong> Followed up with client regarding outstanding balance. Client promised payment by end of month.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-yellow-50 rounded-lg">
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-2"></i>
+                                <div>
+                                    <p class="text-sm text-yellow-800"><strong>Dec 15, 2023:</strong> Account placed on credit hold due to 60-day overdue. No new orders will be processed.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-gray-500 mt-1 mr-2"></i>
+                                <div>
+                                    <p class="text-sm text-gray-700"><strong>Nov 1, 2023:</strong> Client requested extended payment terms due to financial difficulties.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h3 class="font-semibold text-gray-900 mb-3">Add Note</h3>
+                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                  rows="3" placeholder="Add a note about this client..."></textarea>
+                        <button class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                            Save Note
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="hidden">
+        <div class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-green-700">Backoffice Administration</h1>
+                        <p class="text-gray-600 mt-1">Finance & Operations Management</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                            High Priority
+                        </div>
+                        <button id="adminLogout" class="text-gray-600 hover:text-gray-800 font-medium">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Client Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-red-100 rounded-lg">
+                            <i class="fas fa-ban text-red-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">JULMAR Status</p>
+                            <p class="text-2xl font-bold text-red-600">Credit Hold</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-red-100 rounded-lg">
+                            <i class="fas fa-dollar-sign text-red-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Outstanding</p>
+                            <p class="text-2xl font-bold text-red-600">$2,850.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-yellow-100 rounded-lg">
+                            <i class="fas fa-history text-yellow-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Payment History</p>
+                            <p class="text-2xl font-bold text-gray-900">3 Months</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-blue-100 rounded-lg">
+                            <i class="fas fa-users text-blue-600 text-lg"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Account Manager</p>
+                            <p class="text-2xl font-bold text-gray-900">John Martinez</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl mt-1"></i>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-red-800">Critical Account Alert - JULMAR</h3>
+                        <p class="text-red-700 mt-1">JULMAR account has $2,850.00 outstanding balance with partial payment 2 months ago and no payment last month. 
+                           Account is on credit hold. New orders cannot be processed until balance is settled. Immediate financial review required.</p>
+                        <div class="mt-4 grid grid-cols-2 gap-3">
+                            <button id="reviewAccountBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold">
+                                Review Account
+                            </button>
+                            <button id="approveOverrideBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold">
+                                Approve Override
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Overview -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Financial Details</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span class="text-gray-600">Credit Limit</span>
+                            <span class="font-semibold text-gray-900">$3,000.00</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span class="text-gray-600">Credit Used</span>
+                            <span class="font-semibold text-gray-900">$2,850.00</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span class="text-gray-600">Available Credit</span>
+                            <span class="font-semibold text-red-600">$150.00</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span class="text-gray-600">Credit Utilization</span>
+                            <span class="font-semibold text-red-600">95%</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <span class="text-gray-600">Payment Terms</span>
+                            <span class="font-semibold text-gray-900">Net 30</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div class="flex">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-2"></i>
+                            <div>
+                                <p class="text-sm text-yellow-800"><strong>Warning:</strong> Client has exceeded 90% of credit limit and has payment delays. 
+                                   Consider credit limit adjustment or payment plan.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Payment Timeline</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="flex flex-col items-center mr-4">
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <div class="w-px h-12 bg-green-300"></div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Nov 15, 2023</p>
+                                <p class="text-sm text-gray-600">Partial Payment: $1,000.00</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="flex flex-col items-center mr-4">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                <div class="w-px h-12 bg-yellow-300"></div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Oct 2023</p>
+                                <p class="text-sm text-gray-600">No Payment - 30 days overdue</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="flex flex-col items-center mr-4">
+                                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <div class="w-px h-12 bg-red-300"></div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Sep 2023</p>
+                                <p class="text-sm text-gray-600">No Payment - 60 days overdue</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="flex flex-col items-center mr-4">
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">Jan 10, 2024</p>
+                                <p class="text-sm text-gray-600">Partial Payment: $1,500.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Panel -->
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Account Actions</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center p-6 border rounded-lg hover:shadow-md transition-shadow">
+                        <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-file-invoice-dollar text-blue-600"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 mb-2">Payment Plan</h3>
+                        <p class="text-sm text-gray-600 mb-4">Create a payment plan to settle outstanding balance.</p>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm">
+                            Create Plan
+                        </button>
+                    </div>
+
+                    <div class="text-center p-6 border rounded-lg hover:shadow-md transition-shadow">
+                        <div class="bg-yellow-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-handshake text-yellow-600"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 mb-2">Credit Override</h3>
+                        <p class="text-sm text-gray-600 mb-4">Temporarily override credit hold for urgent orders.</p>
+                        <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-lg text-sm">
+                            Request Override
+                        </button>
+                    </div>
+
+                    <div class="text-center p-6 border rounded-lg hover:shadow-md transition-shadow">
+                        <div class="bg-red-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-ban text-red-600"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 mb-2">Account Suspension</h3>
+                        <p class="text-sm text-gray-600 mb-4">Suspend account due to prolonged non-payment.</p>
+                        <button class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm">
+                            Suspend Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Login functionality
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            const userType = document.getElementById('userType').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple validation
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+            
+            // Hide login screen
+            document.getElementById('loginScreen').classList.add('hidden');
+            
+            // Show appropriate dashboard
+            if (userType === 'client') {
+                document.getElementById('clientDashboard').classList.remove('hidden');
+            } else if (userType === 'agent') {
+                document.getElementById('agentDashboard').classList.remove('hidden');
+            } else if (userType === 'admin') {
+                document.getElementById('adminDashboard').classList.remove('hidden');
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('clientLogout').addEventListener('click', function() {
+            showLoginScreen();
+        });
+
+        document.getElementById('agentLogout').addEventListener('click', function() {
+            showLoginScreen();
+        });
+
+        document.getElementById('adminLogout').addEventListener('click', function() {
+            showLoginScreen();
+        });
+
+        function showLoginScreen() {
+            document.getElementById('clientDashboard').classList.add('hidden');
+            document.getElementById('agentDashboard').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        // Quantity buttons for products
+        document.querySelectorAll('.quantity-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.dataset.action;
+                const product = this.dataset.product;
+                const input = document.querySelector(`input[data-product="${product}"]`);
+                let value = parseInt(input.value);
+                
+                if (action === 'increase') {
+                    input.value = value + 1;
+                } else if (action === 'decrease' && value > 0) {
+                    input.value = value - 1;
+                }
+            });
+        });
+
+        // Make payment button
+        document.getElementById('makePaymentBtn').addEventListener('click', function() {
+            alert('Payment processing would be integrated with your banking system. Please contact your account manager for payment options.');
+        });
+
+        // Agent actions
+        document.getElementById('contactClientBtn').addEventListener('click', function() {
+            alert('Contacting JULMAR procurement team via phone and email to discuss outstanding balance and payment options.');
+        });
+
+        document.getElementById('escalateBtn').addEventListener('click', function() {
+            alert('Account has been escalated to Finance Department for further review and action.');
+            this.textContent = 'Escalated';
+            this.classList.remove('bg-red-600', 'hover:bg-red-700');
+            this.classList.add('bg-gray-400', 'cursor-not-allowed');
+            this.disabled = true;
+        });
+
+        // Admin actions
+        document.getElementById('reviewAccountBtn').addEventListener('click', function() {
+            alert('Comprehensive account review initiated. Analyzing payment history, order patterns, and financial health of JULMAR.');
+        });
+
+        document.getElementById('approveOverrideBtn').addEventListener('click', function() {
+            const override = confirm('Are you sure you want to approve a credit override for JULMAR? This will allow new orders despite outstanding balance.');
+            if (override) {
+                alert('Credit override approved for 30 days. New orders can now be processed for JULMAR.');
+                this.textContent = 'Override Approved';
+                this.classList.remove('bg-green-600', 'hover:bg-green-700');
+                this.classList.add('bg-blue-600');
+            }
+        });
+    </script>
+</body>
+</html>
